@@ -1,9 +1,14 @@
 package vn.shop.economic_service.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.Set;
 
 @Entity
 @Builder
@@ -12,15 +17,12 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Image {
+public class Size {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    String id;
+    String name;
 
-    String url;
 
-    @ManyToOne
-    @JoinColumn(name="product_id")
+    @OneToMany(mappedBy = "size")
     @JsonBackReference
-    Product product;
+    Set<ProductSize> productSizes;
 }

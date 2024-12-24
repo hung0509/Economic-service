@@ -37,7 +37,7 @@ public class DiscountController {
 
     @GetMapping
     public ApiResponse<List<DiscountResponse>> get(@RequestParam(defaultValue = "0") int page,
-                                                   @RequestParam(defaultValue = "10") int size) {
+                                                   @RequestParam(defaultValue = "5") int size) {
         return ApiResponse.<List<DiscountResponse>>builder()
                 .result(discountService.getAll(page, size))
                 .build();

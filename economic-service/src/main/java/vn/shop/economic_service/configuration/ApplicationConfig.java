@@ -15,6 +15,7 @@ public class ApplicationConfig {
     @Bean
     public ApplicationRunner applicationRunner(UserRepository userRepository,PasswordEncoder passwordEncoder){
         return runner -> {
+            System.setProperty("AWS_JAVA_V1_DISABLE_DEPRECATION_ANNOUNCEMENT", "true");
             if(!userRepository.existsByUsername("admin")){
                 User u = User.builder()
                         .username("admin")

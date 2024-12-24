@@ -1,5 +1,6 @@
 package vn.shop.economic_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -44,4 +45,7 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     Set<Order> orders;
 
+    @OneToOne(mappedBy = "user")
+    @JsonBackReference
+    Cart cart;
 }

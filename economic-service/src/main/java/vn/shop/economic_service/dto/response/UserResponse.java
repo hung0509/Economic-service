@@ -24,4 +24,5 @@ public class UserResponse {
     Set<Role> roles;
     Andress andress;
     Set<Order> orders;
+    String cart_id;
 }

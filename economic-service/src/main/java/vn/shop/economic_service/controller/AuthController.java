@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.shop.economic_service.dto.request.AuthenticateRequest;
 import vn.shop.economic_service.dto.request.IntrospectRequest;
+import vn.shop.economic_service.dto.request.RefreshTokenRequest;
 import vn.shop.economic_service.dto.response.ApiResponse;
 import vn.shop.economic_service.dto.response.AuthenticateResponse;
 import vn.shop.economic_service.dto.response.IntrospectResponse;
@@ -38,6 +39,13 @@ public class AuthController {
     public ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest request) throws ParseException, JOSEException {
         return ApiResponse.<IntrospectResponse>builder()
                 .result(authenticationService.introspect(request))
+                .build();
+    }
+
+    @PostMapping("/refresh")
+    public ApiResponse<AuthenticateResponse> refresh(@RequestBody RefreshTokenRequest request) throws ParseException, JOSEException {
+        return ApiResponse.<AuthenticateResponse>builder()
+                .result(authenticationService.refresh(request))
                 .build();
     }
 }

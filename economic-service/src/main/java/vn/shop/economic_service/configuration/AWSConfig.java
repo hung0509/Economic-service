@@ -15,7 +15,7 @@ public class AWSConfig {
     @Value("${aws.access_key}")
     private String accessKey; //khóa truy cập
 
-    @Value("${aws.secret_key}")
+    @Value("${aws.secret-key}")
     private String secretKey;//Khóa bảo mật
 
     @Value("${aws.region}")

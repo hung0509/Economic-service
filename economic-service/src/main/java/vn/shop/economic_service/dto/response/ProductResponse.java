@@ -2,11 +2,10 @@ package vn.shop.economic_service.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import vn.shop.economic_service.entity.Category;
 import vn.shop.economic_service.entity.Discount;
-import vn.shop.economic_service.entity.Image;
+import vn.shop.economic_service.entity.ProductSize;
+import vn.shop.economic_service.entity.Size;
 
-import java.time.LocalDate;
 import java.util.Set;
 
 @Data
@@ -20,8 +19,8 @@ public class ProductResponse {
     String description;
     String vendor;
     float price;
-    int stock_quantity;
+    Set<ProductSize> sizes;
     Discount discount;
     String category;
-    Set<Image> images;
+    String images;
 }

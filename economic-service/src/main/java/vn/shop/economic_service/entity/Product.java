@@ -24,15 +24,15 @@ public class Product {
     String description;
     String vendor;
     float price;
-    int stock_quantity;
+    String images;
     LocalDate created_at;
     LocalDate updated_at;
 
-    @OneToMany(mappedBy = "product_pr")
+    @OneToMany(mappedBy = "product_pr",cascade = CascadeType.ALL)
     @JsonBackReference
     Set<CartProduct> carts;
 
-    @ManyToOne()
+    @ManyToOne(cascade = {CascadeType.MERGE, CascadeType.PERSIST,CascadeType.REFRESH})
     @JoinColumn(name = "category_id")
     @JsonBackReference
     Category category;
@@ -42,11 +42,11 @@ public class Product {
     @JsonManagedReference
     Discount discount;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    @JsonManagedReference
-    Set<Image> images;
-
     @OneToMany(mappedBy = "product")
     @JsonBackReference
     Set<OrderDetail> order_details;
+
+    @OneToMany(mappedBy = "product")
+    @JsonManagedReference
+    Set<ProductSize> sizes;
 }

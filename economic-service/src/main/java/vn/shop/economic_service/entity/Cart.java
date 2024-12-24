@@ -25,5 +25,10 @@ public class Cart {
     LocalDate updated_at;
 
     @OneToMany(mappedBy = "cart_pr")
+    @JsonManagedReference
     Set<CartProduct> products;
+
+    @OneToOne
+    @JoinColumn(name="user_id")
+    User user;
 }

@@ -63,4 +63,12 @@ public class UserController {
                 .result(userService.getByUsername(username))
                 .build();
     }
+
+    @GetMapping("/customer")
+    public ApiResponse<List<UserResponse>> getCustomer(@RequestParam(defaultValue = "0") int page,
+                                                       @RequestParam(defaultValue = "5") int size){
+        return ApiResponse.<List<UserResponse>>builder()
+                .result(userService.getCustomer("USER",page, size))
+                .build();
+    }
 }

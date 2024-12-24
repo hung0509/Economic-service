@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-//import vn.shop.economic_service.entity.key.CartProductKey;
+import vn.shop.economic_service.entity.key.ProductSizeKey;
 
 @Entity
 @Builder
@@ -14,21 +14,21 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CartProduct {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    int id;
+public class ProductSize {
+    @EmbeddedId
+    ProductSizeKey id;
 
     @ManyToOne
-    @JoinColumn(name = "cart_id")
-    @JsonBackReference
-    Cart cart_pr;
-
-    @ManyToOne
+    @MapsId("productId")
     @JoinColumn(name = "product_id")
-    @JsonManagedReference
-    Product product_pr;
+    @JsonBackReference
+    Product product;
 
-    int amount;
-    String size;
+    @ManyToOne
+    @MapsId("sizeId")
+    @JoinColumn(name = "size_id")
+    @JsonManagedReference
+    Size size;
+
+    int stockQuantity;
 }
