@@ -1,5 +1,7 @@
 package vn.shop.economic_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -18,11 +20,15 @@ public class OrderDetail {
 
     int quantity;
 
+    String size;
+
     @ManyToOne()
     @JoinColumn(name="product_id")
+    @JsonManagedReference
     Product product;
 
     @ManyToOne
     @JoinColumn(name = "order_id")
+    @JsonBackReference
     private Order order;
 }

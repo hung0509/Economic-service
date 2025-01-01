@@ -17,5 +17,6 @@ public interface UserMapper {
     User toUpdateUser(UserUpdateRequest request);
 
     @Mapping(target = "cart_id", source = "cart.id")
+    @Mapping(target = "orders", ignore = true)
     UserResponse toUserResponse(User user);
 }

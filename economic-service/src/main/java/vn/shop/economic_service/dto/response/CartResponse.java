@@ -19,36 +19,17 @@ import java.util.Set;
 public class CartResponse {
     String id;
     User user;
-    float total_money;
     Set<ProductCartBuilder> products;
 
     @Getter
+    @Setter
     public static class ProductCartBuilder{
+        private String id;
         private String name;
         private float prices;
         private String images;
         private String size;
         private int amount;
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public void setImages(String images) {
-            this.images = images;
-        }
-
-        public void setPrices(float prices) {
-            this.prices = prices;
-        }
-
-        public void setSize(String size) {
-            this.size = size;
-        }
-
-        public void setAmount(int amount) {
-            this.amount = amount;
-        }
 
         public ProductCartBuilder(String name, String images, String size, float prices, int amount) {
             this.name = name;

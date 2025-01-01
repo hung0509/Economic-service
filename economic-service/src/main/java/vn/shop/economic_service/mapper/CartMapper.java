@@ -18,6 +18,7 @@ public interface CartMapper {
     @Mapping(source = "product_pr.price", target = "prices")
     @Mapping(source = "product_pr.images", target = "images")
     @Mapping(source = "size", target = "size")
+    @Mapping(source = "product_pr.id", target = "id")
     @Mapping(source = "amount", target = "amount")
     CartResponse.ProductCartBuilder cartProductToProductCartBuilder(CartProduct cartProduct);
 }

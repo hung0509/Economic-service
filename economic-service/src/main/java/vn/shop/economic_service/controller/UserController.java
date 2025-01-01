@@ -5,10 +5,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 import vn.shop.economic_service.dto.request.UserCreateRequest;
 import vn.shop.economic_service.dto.request.UserUpdateRequest;
 import vn.shop.economic_service.dto.response.ApiResponse;
 import vn.shop.economic_service.dto.response.UserResponse;
+import vn.shop.economic_service.exception.AppException;
 import vn.shop.economic_service.service.UserService;
 
 import java.util.List;
@@ -69,6 +71,25 @@ public class UserController {
                                                        @RequestParam(defaultValue = "5") int size){
         return ApiResponse.<List<UserResponse>>builder()
                 .result(userService.getCustomer("USER",page, size))
+                .build();
+    }
+
+    @GetMapping("verify/{token}")
+    public RedirectView verifyEmail(@PathVariable String token){
+        try{
+            userService.verifyAccount(token);
+        }catch (AppException e){
+            if(e.getErrorCode().getCode() == 8888 || e.getErrorCode().getCode() == 1001){
+                return new RedirectView("http://localhost:4200/404");
+            }
+        }
+        return new RedirectView("http://localhost:4200/");
+    }
+
+    @GetMapping("reset-password/{email}")
+    public ApiResponse<Void> resetPassword(@PathVariable String email){
+        userService.SendMailResetPassword(email);
+        return ApiResponse.<Void>builder()
                 .build();
     }
 }

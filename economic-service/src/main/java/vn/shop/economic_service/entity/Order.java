@@ -1,5 +1,6 @@
 package vn.shop.economic_service.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -28,16 +29,20 @@ public class Order {
 
     @ManyToOne()
     @JoinColumn(name="delivery_id")
+    @JsonManagedReference
     DeliveryMethod deliveryMethod;
 
     @ManyToOne()
     @JoinColumn(name="payment_id")
+    @JsonManagedReference
     PaymentMethod paymentMethod;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @JsonManagedReference
     Set<OrderDetail> orderDetails;
 
     @ManyToOne()
     @JoinColumn(name="user_id")
+    @JsonManagedReference
     User user;
 }

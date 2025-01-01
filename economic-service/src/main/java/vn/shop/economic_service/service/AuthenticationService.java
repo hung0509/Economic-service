@@ -1,10 +1,13 @@
 package vn.shop.economic_service.service;
 
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
+import com.amazonaws.services.simpleemail.model.*;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -17,26 +20,26 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import vn.shop.economic_service.Repository.InvalidatedTokenRepository;
+import vn.shop.economic_service.Repository.RoleRepository;
 import vn.shop.economic_service.Repository.UserRepository;
-import vn.shop.economic_service.dto.request.AuthenticateRequest;
-import vn.shop.economic_service.dto.request.IntrospectRequest;
-import vn.shop.economic_service.dto.request.LogoutRequest;
-import vn.shop.economic_service.dto.request.RefreshTokenRequest;
+import vn.shop.economic_service.Repository.httpclient.OutboundIdentityClient;
+import vn.shop.economic_service.Repository.httpclient.OutboundUserClient;
+import vn.shop.economic_service.dto.request.*;
 import vn.shop.economic_service.dto.response.AuthenticateResponse;
 import vn.shop.economic_service.dto.response.IntrospectResponse;
-import vn.shop.economic_service.entity.InvalidatedToken;
-import vn.shop.economic_service.entity.User;
+import vn.shop.economic_service.entity.*;
 import vn.shop.economic_service.exception.AppException;
 import vn.shop.economic_service.exception.ErrorCode;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.StringJoiner;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -45,6 +48,16 @@ import java.util.UUID;
 public class AuthenticationService {
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
+    OutboundIdentityClient outboundIdentityClient;
+    OutboundUserClient outboundUserClient;
+    RoleRepository roleRepository;
+    AmazonSimpleEmailService amazonSimpleEmailService;
+
+    String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    String LOWER = "abcdefghijklmnopqrstuvwxyz";
+    String DIGITS = "0123456789";
+    String SPECIAL = "!@#$%^&*()-_=+[]{}|;:'\",.<>/?";
+    String ALL_CHARACRTER = UPPER + LOWER + DIGITS + SPECIAL;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -52,11 +65,110 @@ public class AuthenticationService {
 
     @NonFinal
     @Value("${jwt.valid-duration}")
-    public long VALID_DURATION;
+    private long VALID_DURATION;
 
     @NonFinal
     @Value("${jwt.refreshable-duration}")
-    public long REFRESHABLE_DURATION;
+    private long REFRESHABLE_DURATION;
+
+    @NonFinal
+    @Value("${oauth2.client-id}")
+    private String CLIENT_ID;
+
+    @NonFinal
+    @Value("${oauth2.client-secret}")
+    private String CLIENT_SECRET;
+
+    @NonFinal
+    @Value("${oauth2.redirect_uri}")
+    private String REDIRECT_URI;
+
+    @NonFinal
+    protected final String GRANT_TYPE = "authorization_code";
+
+    public AuthenticateResponse outboundAuthentication(String code){
+        String decodedCode = "";
+        try {
+            decodedCode = java.net.URLDecoder.decode(code, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new AppException(ErrorCode.DECODE_NOT_AVAILABLE);
+        }
+        var response = outboundIdentityClient.exchangeToken(ExchangeTokenRequest.builder()
+                    .code(decodedCode)
+                    .clientId(CLIENT_ID)
+                    .clientSecret(CLIENT_SECRET)
+                    .redirectUri(REDIRECT_URI)
+                    .grantType(GRANT_TYPE)
+                    .build());
+
+        log.info("TOKEN RESPONSE {}", response);
+
+        var userInfo = outboundUserClient.getUserInfo("json", response.getAccessToken());
+
+        var user = userRepository.findByUsername(userInfo.getEmail());
+
+        if(Objects.isNull(user)) { //Neeus chua ton tai thi them user nay vao he thong
+            Role role = roleRepository.findById("USER")
+                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXIST));
+
+            Set<Role> roles = new HashSet<>();
+            roles.add(role);
+
+            Andress andress = Andress.builder()
+                    .apartment_no("")
+                    .sweet_name("")
+                    .city("")
+                    .created_at(LocalDate.now())
+                    .build();
+
+            String password = generatePassword();
+
+            user = User.builder()
+                    .email(userInfo.getEmail())
+                    .username(userInfo.getEmail())
+                    .password(password)
+                    .firstname(userInfo.getFamilyName())
+                    .lastname(userInfo.getGivenName())
+                    .created_at(LocalDate.now())
+                    .roles(roles)
+                    .andress(andress)
+                    .verify(true)
+                    .token_verify(null)
+                    .updated_at(LocalDate.now())
+                    .build();
+
+            Cart cart = Cart.builder()
+                    .products(null)
+                    .created_at(LocalDate.now())
+                    .updated_at(LocalDate.now())
+                    .user(user)
+                    .build();
+
+            user.setCart(cart);
+
+            user = userRepository.save(user);
+
+            //Tien hanh gui mail
+            String message = "<p>Below is the password we reset: " + password + "</p>";
+
+            MailRequest mailRequest = MailRequest
+                    .builder()
+                    .fromAddress("hungtaithe12@gmail.com")
+                    .toAddress(user.getEmail())
+                    .subject("Reset password required")
+                    .content(message)
+                    .build();
+            sendMail(mailRequest);
+        }
+
+        var token = generateToken(user);
+
+        return AuthenticateResponse.builder()
+                .success(true)
+                .token(token)
+                .build();
+
+    }
 
     public AuthenticateResponse authenticate(AuthenticateRequest request) {
         var user = userRepository.findByUsername(request.getUsername());
@@ -211,6 +323,42 @@ public class AuthenticationService {
             });
         }
         return joiner.toString();
+    }
+
+    private String generatePassword(){
+        SecureRandom RANDOM = new SecureRandom();
+
+        char[] password = new char[8];
+
+        password[0] = UPPER.charAt(RANDOM.nextInt(UPPER.length()));
+        password[1] = LOWER.charAt(RANDOM.nextInt(LOWER.length()));
+        password[2] = DIGITS.charAt(RANDOM.nextInt(DIGITS.length()));
+        password[3] = SPECIAL.charAt(RANDOM.nextInt(SPECIAL.length()));
+
+        for(int i = 4; i < 8; i++){
+            password[i] = ALL_CHARACRTER.charAt(RANDOM.nextInt(ALL_CHARACRTER.length()));
+        }
+
+        for (int i = 7; i > 0; i--) {
+            int j = RANDOM.nextInt(i + 1);
+            char temp = password[i];
+            password[i] = password[j];
+            password[j] = temp;
+        }
+
+        return new String(password);
+    }
+
+    public void sendMail(MailRequest request){
+        SendEmailRequest sendEmailRequest = new SendEmailRequest()
+                .withDestination(new Destination().withToAddresses(request.getToAddress()))
+                .withMessage(new Message()
+                        .withBody(new Body()
+                                .withHtml(new Content().withCharset("UTF-8").withData(request.getContent())))
+                        .withSubject(new Content().withCharset("UTF-8").withData(request.getSubject()))
+                )
+                .withSource(request.getFromAddress());
+        amazonSimpleEmailService.sendEmail(sendEmailRequest);
     }
 
 }

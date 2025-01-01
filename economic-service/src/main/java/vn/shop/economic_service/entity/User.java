@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
 import java.util.Set;
 
 @Entity
@@ -26,7 +27,14 @@ public class User {
     String firstname;
     String lastname;
     String email;
-    String phone;
+    LocalDate created_at;
+    LocalDate updated_at;
+
+
+    @Column(columnDefinition = "BIT")
+    boolean verify;
+
+    String token_verify;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "andress_id")
@@ -43,9 +51,10 @@ public class User {
     Set<Role> roles;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonBackReference
     Set<Order> orders;
 
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonBackReference
     Cart cart;
 }

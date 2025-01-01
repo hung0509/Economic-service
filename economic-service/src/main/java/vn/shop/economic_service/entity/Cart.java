@@ -20,7 +20,6 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
-    float total_money;
     LocalDate created_at;
     LocalDate updated_at;
 

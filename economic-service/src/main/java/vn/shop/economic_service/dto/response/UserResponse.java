@@ -21,6 +21,8 @@ public class UserResponse {
     String lastname;
     String email;
     String phone;
+    boolean verify;
+    String token_verify;
     Set<Role> roles;
     Andress andress;
     Set<Order> orders;

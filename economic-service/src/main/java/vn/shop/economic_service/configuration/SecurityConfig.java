@@ -15,7 +15,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
     private final String[] URL_PUBLIC = {
-            "/auth", "/auth/login", "/auth/refresh", "/auth/logout", "/auth/introspect"
+            "/auth", "/auth/login", "/auth/refresh", "/auth/logout", "/auth/introspect",
+            "/users", "auth/outbound/authentication"
     };
 
     @Bean
@@ -32,7 +33,8 @@ public class SecurityConfig {
 
         httpSecurity.authorizeHttpRequests(request -> {
                     request.requestMatchers(HttpMethod.POST, URL_PUBLIC).permitAll()
-                            .requestMatchers(HttpMethod.GET, "/users").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/payments/**").permitAll() //thanh toan
+                            .requestMatchers(HttpMethod.GET, "/users/verify/**").permitAll()//xac thuc email
                             .anyRequest().authenticated();
                 }
         );
